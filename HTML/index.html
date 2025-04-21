@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AD9834 信号源控制台</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AD9834 信号源控制台</h1>
+            <div class="connection-controls">
+                <button id="connectButton" class="primary-button">连接设备</button>
+                <span id="connectionStatus">未连接</span>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="control-panel">
+                <div class="panel-section">
+                    <h2>频率控制</h2>
+                    <div class="control-group">
+                        <label for="freqRegister">频率寄存器:</label>
+                        <div class="toggle-container">
+                            <input type="radio" id="freq0" name="freqRegister" value="0" checked>
+                            <label for="freq0">F0</label>
+                            <input type="radio" id="freq1" name="freqRegister" value="1">
+                            <label for="freq1">F1</label>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label for="frequency">频率 (Hz):</label>
+                        <input type="number" id="frequency" min="0" max="37500000" value="1000" step="1">
+                        <button id="setFrequencyButton" class="action-button">设置</button>
+                    </div>
+                    <div class="frequency-presets">
+                        <button data-freq="100">100 Hz</button>
+                        <button data-freq="1000">1 kHz</button>
+                        <button data-freq="10000">10 kHz</button>
+                        <button data-freq="100000">100 kHz</button>
+                        <button data-freq="1000000">1 MHz</button>
+                        <button data-freq="10000000">10 MHz</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h2>相位控制</h2>
+                    <div class="control-group">
+                        <label for="phaseRegister">相位寄存器:</label>
+                        <div class="toggle-container">
+                            <input type="radio" id="phase0" name="phaseRegister" value="0" checked>
+                            <label for="phase0">P0</label>
+                            <input type="radio" id="phase1" name="phaseRegister" value="1">
+                            <label for="phase1">P1</label>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label for="phase">相位 (0-4095):</label>
+                        <input type="number" id="phase" min="0" max="4095" value="0" step="1">
+                        <button id="setPhaseButton" class="action-button">设置</button>
+                    </div>
+                    <div class="phase-slider-container">
+                        <input type="range" id="phaseSlider" min="0" max="4095" value="0" step="1">
+                        <div class="phase-labels">
+                            <span>0°</span>
+                            <span>90°</span>
+                            <span>180°</span>
+                            <span>270°</span>
+                            <span>360°</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h2>波形控制</h2>
+                    <div class="control-group">
+                        <label for="waveformType">波形类型:</label>
+                        <div class="toggle-container">
+                            <input type="radio" id="sine" name="waveformType" value="sine" checked>
+                            <label for="sine">正弦波</label>
+                            <input type="radio" id="triangle" name="waveformType" value="triangle">
+                            <label for="triangle">三角波</label>
+                        </div>
+                        <button id="setWaveformButton" class="action-button">设置</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h2>寄存器选择</h2>
+                    <div class="control-group">
+                        <button id="selectFreq0Button" class="action-button">选择频率寄存器 0</button>
+                        <button id="selectFreq1Button" class="action-button">选择频率寄存器 1</button>
+                    </div>
+                    <div class="control-group">
+                        <button id="selectPhase0Button" class="action-button">选择相位寄存器 0</button>
+                        <button id="selectPhase1Button" class="action-button">选择相位寄存器 1</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="visualization-panel">
+                <h2>波形可视化</h2>
+                <div class="waveform-container">
+                    <canvas id="waveformChart"></canvas>
+                </div>
+                <div class="visualization-controls">
+                    <div class="control-group">
+                        <label for="timeScale">时间刻度:</label>
+                        <select id="timeScale">
+                            <option value="1">1x</option>
+                            <option value="2">2x</option>
+                            <option value="5">5x</option>
+                            <option value="10">10x</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="amplitudeScale">幅度刻度:</label>
+                        <select id="amplitudeScale">
+                            <option value="1">1x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="0.5">0.5x</option>
+                            <option value="0.25">0.25x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="console-panel">
+            <h2>控制台</h2>
+            <div class="console-output" id="consoleOutput"></div>
+            <div class="console-input-container">
+                <input type="text" id="consoleInput" placeholder="输入命令...">
+                <button id="sendCommandButton" class="action-button">发送</button>
+            </div>
+            <div class="console-help">
+                <details>
+                    <summary>命令帮助</summary>
+                    <div class="command-help-content">
+                        <table>
+                            <tr>
+                                <th>命令</th>
+                                <th>描述</th>
+                                <th>示例</th>
+                            </tr>
+                            <tr>
+                                <td>F0xxxxx</td>
+                                <td>设置频率寄存器0的值（单位：Hz）</td>
+                                <td>F01000</td>
+                            </tr>
+                            <tr>
+                                <td>F1xxxxx</td>
+                                <td>设置频率寄存器1的值（单位：Hz）</td>
+                                <td>F110000</td>
+                            </tr>
+                            <tr>
+                                <td>P0xxxx</td>
+                                <td>设置相位寄存器0的值（范围：0-4095）</td>
+                                <td>P00</td>
+                            </tr>
+                            <tr>
+                                <td>P1xxxx</td>
+                                <td>设置相位寄存器1的值（范围：0-4095）</td>
+                                <td>P11024</td>
+                            </tr>
+                            <tr>
+                                <td>SF0</td>
+                                <td>选择频率寄存器0</td>
+                                <td>SF0</td>
+                            </tr>
+                            <tr>
+                                <td>SF1</td>
+                                <td>选择频率寄存器1</td>
+                                <td>SF1</td>
+                            </tr>
+                            <tr>
+                                <td>SP0</td>
+                                <td>选择相位寄存器0</td>
+                                <td>SP0</td>
+                            </tr>
+                            <tr>
+                                <td>SP1</td>
+                                <td>选择相位寄存器1</td>
+                                <td>SP1</td>
+                            </tr>
+                            <tr>
+                                <td>WS</td>
+                                <td>设置波形为正弦波</td>
+                                <td>WS</td>
+                            </tr>
+                            <tr>
+                                <td>WT</td>
+                                <td>设置波形为三角波</td>
+                                <td>WT</td>
+                            </tr>
+                            <tr>
+                                <td>?/H</td>
+                                <td>显示帮助信息</td>
+                                <td>?</td>
+                            </tr>
+                        </table>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <footer>
+            <p>AD9834 信号源控制台 | 基于Web Serial API</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
