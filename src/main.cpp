@@ -1,11 +1,17 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
 #include <Preferences.h>
 #include <math.h>
 #include "ad983x.h"
+
+// Comment out the line below to disable OLED functionality
+// #define OLED
+
+#ifdef OLED
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#endif
 
 // AD9834 Pin Definitions
 #define AD9834_SYNC_PIN    0   // SYNC (select_pin)
@@ -15,6 +21,7 @@
 #define AD9834_FSE_PIN     4   // Frequency Select
 #define AD9834_PSE_PIN     21  // Phase Select
 
+#ifdef OLED
 // OLED Display Settings
 #define OLED_SDA_PIN       6
 #define OLED_SCL_PIN       7
@@ -22,12 +29,15 @@
 #define OLED_SCREEN_WIDTH  128
 #define OLED_SCREEN_HEIGHT 32
 #define OLED_ADDRESS       0x3C
+#endif
 
 // AD9834 Settings
 #define AD9834_CLOCK_FREQ  75000000  // 75MHz reference clock
 
 // Global Variables
+#ifdef OLED
 Adafruit_SSD1306 display(OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT, &Wire, OLED_RESET_PIN);
+#endif
 AD983X_PIN ad9834(AD9834_SYNC_PIN, AD9834_CLOCK_FREQ / 1000000, AD9834_RESET_PIN);
 Preferences preferences;
 
@@ -47,7 +57,9 @@ int cmdIndex = 0;
 
 // Function prototypes
 void processCommand();
+#ifdef OLED
 void updateDisplay();
+#endif
 void printHelp();
 void setFrequency(byte reg, uint32_t freq);
 void setPhase(byte reg, uint16_t phase);
@@ -56,7 +68,9 @@ void selectFrequencyRegister(byte reg);
 void selectPhaseRegister(byte reg);
 void saveSettings();
 void loadSettings();
+#ifdef OLED
 void drawWaveform();
+#endif
 
 void setup() {
   // Initialize Serial
@@ -87,6 +101,7 @@ void setup() {
   selectFrequencyRegister(activeFreqReg);
   selectPhaseRegister(activePhaseReg);
   
+  #ifdef OLED
   // Initialize I2C for OLED
   Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
   
@@ -107,6 +122,7 @@ void setup() {
   
   // Update display with current settings
   updateDisplay();
+  #endif
   
   // Print welcome message and help
   Serial.println(F("\nAD9834 Signal Generator"));
@@ -232,8 +248,10 @@ void processCommand() {
       break;
   }
   
+  #ifdef OLED
   // Update display after any command
   updateDisplay();
+  #endif
 }
 
 void setFrequency(byte reg, uint32_t freq) {
@@ -244,6 +262,9 @@ void setFrequency(byte reg, uint32_t freq) {
   }
   ad9834.setFrequency(reg, (long int)freq);
   saveSettings(); // Save settings after change
+  #ifdef OLED
+  updateDisplay();
+  #endif
 }
 
 void setPhase(byte reg, uint16_t phase) {
@@ -309,6 +330,7 @@ void loadSettings() {
   Serial.println(F("Settings loaded"));
 }
 
+#ifdef OLED
 // Draw a simple waveform visualization
 void drawWaveform() {
   const int waveHeight = 8;   // Height of the waveform
@@ -375,6 +397,7 @@ void updateDisplay() {
   
   display.display();
 }
+#endif
 
 void printHelp() {
   Serial.println(F("\n--- AD9834 Signal Generator Commands ---"));
